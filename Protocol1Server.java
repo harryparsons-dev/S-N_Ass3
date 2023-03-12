@@ -7,7 +7,7 @@
 // 5. C -> S: {Ns,Nc}_(Ns xor Nc)
 // 6. S -> C: {secret}_(Ns xor Nc)
 
-// Encryption is 128-bit AES, ECB, PKCS5 padding, nonces are 128 bits. 
+// Encryption is 128-bit AES, ECB, PKCS5 padding, nonces are 128 bits.
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,16 +27,16 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 public class Protocol1Server {
-    
+
     static int portNo = 11336;
     static String hexKey= "f87d80a408c1bf62da8d60c9b3e54a2c";
 
     public static void main (String[] args) {
-	// Listen for connections, when client connects spin off a 
-	// thread to run the protocol over that connection and go 
+	// Listen for connections, when client connects spin off a
+	// thread to run the protocol over that connection and go
 	// back to listening for new connections
-	try { 
-	    
+	try {
+
 	    ServerSocket listening = new ServerSocket(portNo);
 	    while (true) {
 		// For each connection spin off a new protocol instance.
@@ -48,15 +48,15 @@ public class Protocol1Server {
 	    System.out.println("Doh "+e);
 	}
     }
-    
-    
+
+
     private static class ProtocolInstance implements Runnable {
-	
+
 	Socket myConnection;
 	boolean debug = true;
 	static Cipher decAEScipher;
 	static Cipher encAEScipher;
-	
+
 	public ProtocolInstance(Socket myConnection) {
 	    this.myConnection = myConnection;
 	    //Set up the cipher object
@@ -68,29 +68,29 @@ public class Protocol1Server {
 		encAEScipher.init(Cipher.ENCRYPT_MODE, aesKey);
 	    } catch (Exception e) {
 		System.out.println("Doh "+e);
-	    }			
+	    }
 	}
-	
+
 	public void run() {
 	    OutputStream outStream;
 	    InputStream inStream;
 	    try {
 		outStream = myConnection.getOutputStream();
 		inStream = myConnection.getInputStream();
-		
+
 		// Protocol Step 1
 		// We should be sent the ascii for "Connect Protocol 1"
 		byte[] message1 = new byte[18];
 		inStream.read(message1);
 		if (debug) System.out.println("Got M1: "+new String(message1));
-		
+
 		if (!(new String(message1)).equals("Connect Protocol 1")) {
 		    outStream.write(("Protocol Error. Unregonised command: ").getBytes());
 		    outStream.write(message1);
 		    myConnection.close();
 		    return;
 		}
-		
+
 		// Protocol Step 2
 		// We send the nonce challenge. {Ns}_Kcs
 		SecureRandom random = new SecureRandom();
@@ -99,41 +99,41 @@ public class Protocol1Server {
 		byte[] cipherTextM2;
 		try {
 		    cipherTextM2 = encAEScipher.doFinal(serverNonce);
-		    
+
 		    if (debug) System.out.println("Server Nonce: "+byteArrayToHexString(serverNonce));
 		    outStream.write(cipherTextM2);
 		    if (debug) System.out.println("Send M2 "+byteArrayToHexString(cipherTextM2));
-		    
+
 		    //Protocol Step 3
 		    byte[] message3 = new byte[32];
 		    inStream.read(message3);
 		    byte[] clientNonce = decAEScipher.doFinal(message3);
 		    if (debug) System.out.println("Recived M3 :"+byteArrayToHexString(message3));
 		    if (debug) System.out.println("    Decrypts to Nc: "+byteArrayToHexString(clientNonce));
-		    
+
 		    // Calculate session key
 		    byte[] keyBytes = xorBytes(serverNonce,clientNonce);
 		    SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, "AES");
-		    Cipher decAEScipherSession = Cipher.getInstance("AES");			
+		    Cipher decAEScipherSession = Cipher.getInstance("AES");
 		    decAEScipherSession.init(Cipher.DECRYPT_MODE, secretKeySpec);
-		    Cipher encAEScipherSession = Cipher.getInstance("AES");			
+		    Cipher encAEScipherSession = Cipher.getInstance("AES");
 		    encAEScipherSession.init(Cipher.ENCRYPT_MODE, secretKeySpec);
 		    if (debug) System.out.println("Session key :"+byteArrayToHexString(keyBytes));
-		    
-		    //Protocol Step 4 
+
+		    //Protocol Step 4
 		    byte[] message4pt =  new byte[32];
 		    System.arraycopy(clientNonce, 0, message4pt, 0, 16);
 		    System.arraycopy(serverNonce, 0, message4pt, 16, 16);
-		    byte[] cipherTextM4 = encAEScipherSession.doFinal(message4pt);	
+		    byte[] cipherTextM4 = encAEScipherSession.doFinal(message4pt);
 		    if (debug) System.out.println("Sending M4 pt:"+byteArrayToHexString(message4pt));
 		    if (debug) System.out.println("    M4 ct:"+byteArrayToHexString(cipherTextM4));
 		    outStream.write(cipherTextM4);
-		    
-		    //Protocol Step 5 
+
+		    //Protocol Step 5
 		    byte[] cipherTextM5 =  new byte[48];
 		    inStream.read(cipherTextM5);
 		    if (debug) System.out.println("Recived M5 ct:"+byteArrayToHexString(cipherTextM5));
-		    byte[] message5pt = decAEScipherSession.doFinal(cipherTextM5);		
+		    byte[] message5pt = decAEScipherSession.doFinal(cipherTextM5);
 		    byte[] inNs = new byte[16];
 		    byte[] inNc = new byte[16];
 		    System.arraycopy(message5pt, 0, inNs, 0, 16);
@@ -141,7 +141,7 @@ public class Protocol1Server {
 		    if (debug) System.out.println("    M5 plainText:"+byteArrayToHexString(message5pt));
 		    if (debug) System.out.println("    M5 inNc:"+byteArrayToHexString(inNc));
 		    if (debug) System.out.println("    M5 inNs:"+byteArrayToHexString(inNs));
-		    
+
 		    //Check the challenge values are correct.
 		    if (!(Arrays.equals(inNc,clientNonce) && Arrays.equals(inNs,serverNonce))) {
 			outStream.write("Nonces dont match".getBytes());
@@ -149,15 +149,15 @@ public class Protocol1Server {
 			return;
 		    }
 		    if (debug) System.out.println("Nonces match,");
-		    
+
 		    //Protocol Step 6
 		    byte[] plainTextM6 = ("Well Done. Submit this value: "+secretValue()).getBytes();
 		    byte[] cipherTextM6 = encAEScipherSession.doFinal(plainTextM6);
 		    outStream.write(cipherTextM6);
 		    if (debug) System.out.println("Secret sent: "+new String(plainTextM6));
 		    myConnection.close();
-		    
-		    //Oh, isn't Java fun:	
+
+		    //Oh, isn't Java fun:
 		} catch (IllegalBlockSizeException e) {
 		    outStream.write("Bad block size".getBytes());
 		    if (debug) System.out.println("Doh "+e);
@@ -185,8 +185,8 @@ public class Protocol1Server {
 	    }
 	}
     }
-    
-    
+
+
     private static byte[] xorBytes (byte[] one, byte[] two) {
 	if (one.length!=two.length) {
 	    return null;
@@ -198,23 +198,23 @@ public class Protocol1Server {
 	    return result;
 	}
     }
-    
-    private static String byteArrayToHexString(byte[] data) { 
+
+    private static String byteArrayToHexString(byte[] data) {
 	StringBuffer buf = new StringBuffer();
-	for (int i = 0; i < data.length; i++) { 
+	for (int i = 0; i < data.length; i++) {
 	    int halfbyte = (data[i] >>> 4) & 0x0F;
 	    int two_halfs = 0;
-	    do { 
-		if ((0 <= halfbyte) && (halfbyte <= 9)) 
+	    do {
+		if ((0 <= halfbyte) && (halfbyte <= 9))
 		    buf.append((char) ('0' + halfbyte));
-		else 
+		else
 		    buf.append((char) ('a' + (halfbyte - 10)));
 		halfbyte = data[i] & 0x0F;
 	    } while(two_halfs++ < 1);
-	} 
+	}
 	return buf.toString();
-    } 
-    
+    }
+
     private static byte[] hexStringToByteArray(String s) {
 	int len = s.length();
 	byte[] data = new byte[len / 2];
@@ -224,9 +224,9 @@ public class Protocol1Server {
 	}
 	return data;
     }
-    
+
 
     private static String secretValue() {
-		return "Hello world!";
+		return "Well Done, you completed the first exercise!";
     }
 }

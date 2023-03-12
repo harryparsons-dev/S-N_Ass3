@@ -21,31 +21,31 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
 public class Protocol1Client {
-    static int portNo = 11337;
-  
+    static int portNo = 11336;
+
     public static void main(String[] args) throws Exception {
 
         try {
             Socket socket = new Socket("localhost", portNo);
             OutputStream outputStream = socket.getOutputStream();
             InputStream inputStream = socket.getInputStream();
-         
+
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
             String message = "Connect Protocol 1";
-         
+
 
            outputStream.write(message.getBytes());
             System.out.println("Sending: " + message);
             Thread.sleep(1000);
-            byte[] buffer = new byte[32]; 
+            byte[] buffer = new byte[32];
             inputStream.read(buffer);
 
             // Sending back same ciphertext:
             Thread.sleep(1000);
-          
+
             outputStream.write(buffer);
             System.out.println("Sending to server: " + byteArrayToHexString(buffer));
 
@@ -53,12 +53,12 @@ public class Protocol1Client {
             inputStream.read(message4);
 
             System.out.println("Server response: " + byteArrayToHexString(message4));
-            
+
 
             // Sending back again
 
             Thread.sleep(1000);
-          
+
             outputStream.write(message4);
             System.out.println("Sending to server: " + byteArrayToHexString(message4));
 
@@ -70,11 +70,11 @@ public class Protocol1Client {
             // while ((bytesRead = inputStream.read(buffer2)) != -1) { // read bytes into buffer
             //     // process bytes as needed
             //     System.out.println("Read " + bytesRead + " bytes from input stream.");
-               
+
             // }
-            
-            
-            byte[] message5 = new byte[208];
+
+
+            byte[] message5 = new byte[80];
 
             inputStream.read(message5);
 
@@ -94,10 +94,10 @@ public class Protocol1Client {
 
 
 
-       
 
-     
-     
+
+
+
              socket.close();
         } catch (Exception e) {
             System.out.print("Whoops! It didn't work!\n" + e.toString());
@@ -114,20 +114,20 @@ public class Protocol1Client {
         }
         return data;
     }
-    private static String byteArrayToHexString(byte[] data) { 
+    private static String byteArrayToHexString(byte[] data) {
         StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < data.length; i++) { 
+        for (int i = 0; i < data.length; i++) {
             int halfbyte = (data[i] >>> 4) & 0x0F;
             int two_halfs = 0;
-            do { 
-            if ((0 <= halfbyte) && (halfbyte <= 9)) 
+            do {
+            if ((0 <= halfbyte) && (halfbyte <= 9))
                 buf.append((char) ('0' + halfbyte));
-            else 
+            else
                 buf.append((char) ('a' + (halfbyte - 10)));
             halfbyte = data[i] & 0x0F;
             } while(two_halfs++ < 1);
-        } 
+        }
         return buf.toString();
-        } 
+        }
 
 }
