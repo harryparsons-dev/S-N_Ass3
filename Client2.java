@@ -127,6 +127,21 @@ public class Client2 {
             // System.out.println("Client nonce +1: " + byteArrayToHexString(encMessage5));
             // outStream.write(hexStringToByteArray(serverNonce1enc));
             outStream.write(encMessage5);
+
+            // byte[] buffer2 = new byte[1024]; // create a buffer to read bytes
+            // int bytesRead;
+            // while ((bytesRead = inStream.read(buffer2)) != -1) { // read bytes into
+            // buffer
+            // // process bytes as needed
+            // System.out.println("Read " + bytesRead + " bytes from input stream.");
+
+            // }
+
+            byte[] message6enc = new byte[432];
+            inStream.read(message6enc);
+            byte[] message6 = decAESsessionCipher.doFinal(message6enc);
+            System.out.println(new String(message6));
+
             // int value = ByteBuffer.wrap(serverNonce).getInt();
             // System.out.println(value); // Output: 66051
             // System.out.println(byteArrayToHexString(serverNonce));

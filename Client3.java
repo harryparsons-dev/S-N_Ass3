@@ -78,7 +78,7 @@ public class Client3 {
             SecureRandom random = new SecureRandom();
             byte[] clientNonce = new byte[8];
             random.nextBytes(clientNonce);
-            String serverNonce1 = "76dd4c26";
+            String serverNonce1 = "5b8a0726";
             byte[] clientNonceBytes = new byte[8];
 
             calculateSessionKey(x, gToTheY);
