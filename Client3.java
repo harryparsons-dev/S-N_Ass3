@@ -30,9 +30,8 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
-import java.util.Scanner;
 
-public class Client2 {
+public class Client3 {
 
     static int portNo = 11338;
     static String hexKey = "6c5fc0d5e5b5fc5e8f43b21d6d4ec6df";
@@ -79,13 +78,13 @@ public class Client2 {
             SecureRandom random = new SecureRandom();
             byte[] clientNonce = new byte[8];
             random.nextBytes(clientNonce);
-            String testNonce = "";
+            String serverNonce1 = "76dd4c26";
             byte[] clientNonceBytes = new byte[8];
 
             calculateSessionKey(x, gToTheY);
             Thread.sleep(1000);
 
-            clientNonceBytes = encAESsessionCipher.doFinal((clientNonce));
+            clientNonceBytes = encAESsessionCipher.doFinal((hexStringToByteArray(serverNonce1)));
 
             // Send encrypted nonce
             int clientNonceint = new BigInteger(clientNonce).intValue();
@@ -113,19 +112,10 @@ public class Client2 {
             // byteArrayToHexString(dec_message4));
             System.arraycopy(dec_message4, 0, message5, 0, 16);
             System.arraycopy(dec_message4, 16, serverNonce, 0, 4);
-            System.out.println("Server nonce + 1 as hex: " + byteArrayToHexString(serverNonce));
-
+            System.out.println("Server nonce as hex: " + byteArrayToHexString(serverNonce));
             byte[] encMessage5 = new byte[32];
-
-            Scanner myObj = new Scanner(System.in);
-            String inputplus1 = myObj.nextLine();
-            byte[] inputbyte = hexStringToByteArray(inputplus1);
-
-            // String serverNonce1enc = "e9bfa9353daa08a5300cfe058122e53b";
-            encMessage5 = encAESsessionCipher.doFinal(inputbyte);
-
-            // System.out.println("Client nonce +1: " + byteArrayToHexString(encMessage5));
-            // outStream.write(hexStringToByteArray(serverNonce1enc));
+            encMessage5 = encAESsessionCipher.doFinal(message5);
+            System.out.println("Client nonce +1: " + byteArrayToHexString(message5));
             outStream.write(encMessage5);
             // int value = ByteBuffer.wrap(serverNonce).getInt();
             // System.out.println(value); // Output: 66051
@@ -147,29 +137,29 @@ public class Client2 {
             // outStream.write(encMessage5);
 
             // sever nonce in bytes:
-            // // example byte array
-            // String hexString = byteArrayToHexString(serverNonce);
-            // // System.out.println("Server nonce: " + hexString);
-            // BigInteger bigInt = new BigInteger(hexString, 16);
-            // int integer_server = bigInt.intValue();
-            // // System.out.println("In integer: " + integer_server);
-            // // System.out.println("Encrypted message: " + (message5));
-            // integer_server = integer_server + 1;
-            // byte[] plus1 = BigInteger.valueOf(integer_server).toByteArray();
-            // // get encrpyed text:
-            // byte[] serverNonceandPlus1 = new byte[2];
-            // serverNonceandPlus1 = xorBytes(serverNonce, plus1);
-            // // System.out.println(byteArrayToHexString(serverNonceandPlus1));
+            // example byte array
+            String hexString = byteArrayToHexString(serverNonce);
+            // System.out.println("Server nonce: " + hexString);
+            BigInteger bigInt = new BigInteger(hexString, 16);
+            int integer_server = bigInt.intValue();
+            // System.out.println("In integer: " + integer_server);
+            // System.out.println("Encrypted message: " + (message5));
+            integer_server = integer_server + 1;
+            byte[] plus1 = BigInteger.valueOf(integer_server).toByteArray();
+            // get encrpyed text:
+            byte[] serverNonceandPlus1 = new byte[2];
+            serverNonceandPlus1 = xorBytes(serverNonce, plus1);
+            // System.out.println(byteArrayToHexString(serverNonceandPlus1));
 
-            // // for (int i = 4; i < 20; i++) {
-            // // // serverNonceandPlus1[i] = 0;
-            // // // }
+            // for (int i = 4; i < 20; i++) {
+            // // serverNonceandPlus1[i] = 0;
+            // // }
 
-            // byte[] plus1withencrypted = xorBytes(message5, serverNonceandPlus1);
-            // // System.out.println(byteArrayToHexString(plus1withencrypted));
-            // // System.out.println("Length 1: " + message5.length);
-            // // System.out.println("Length: " + serverNonceandPlus1.length);
-            // Thread.sleep(1000);
+            byte[] plus1withencrypted = xorBytes(message5, serverNonceandPlus1);
+            // System.out.println(byteArrayToHexString(plus1withencrypted));
+            // System.out.println("Length 1: " + message5.length);
+            // System.out.println("Length: " + serverNonceandPlus1.length);
+            Thread.sleep(1000);
 
         } catch (Exception e) {
             System.out.println(e.getLocalizedMessage());

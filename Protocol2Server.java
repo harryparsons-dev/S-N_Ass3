@@ -155,6 +155,7 @@ public class Protocol2Server {
 							.doFinal(BigInteger.valueOf(clientNonce + 1).toByteArray());
 					byte[] serverNonceBytes = BigInteger.valueOf(serverNonce).toByteArray();
 					byte[] message4body = new byte[20];
+
 					System.arraycopy(encryptedClientNonceInc, 0, message4body, 0, 16);
 					System.arraycopy(serverNonceBytes, 0, message4body, 16, 4);
 					byte[] message4ct = encAESsessionCipher.doFinal(message4body);
